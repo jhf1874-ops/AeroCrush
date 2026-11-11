@@ -1,0 +1,24 @@
+# Builds AeroCrush on GitHub's Macs so you can get the plugin without installing Xcode.
+# Push this folder to a GitHub repo -> Actions tab -> download the "AeroCrush-mac" artifact.
+name: build-mac
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -G Xcode -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release -- -quiet
+      - name: Test DSP
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Package
+        run: |
+          mkdir dist
+          cp -R build/AeroCrush_artefacts/Release/VST3/AeroCrush.vst3 dist/
+          cp -R build/AeroCrush_artefacts/Release/AU/AeroCrush.component dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AeroCrush-mac
+          path: dist
